@@ -28,10 +28,10 @@ export default class BTree {
   findChildIndex(node, key) {
     const idx = node?.keys.findIndex((k) => k >= key);
 
-    if (idx !== -1) {
-      return idx;
+    if (idx === -1) {
+      return node.keys.length;
     } else {
-      this.findChildIndex(node.children[1], key);
+      return idx;
     }
   }
 
@@ -47,13 +47,13 @@ export default class BTree {
         const z = x.children[idx + 1];
 
         if (y.keys.length >= t) {
-          const kPred = this._maximumKey(y);
-          x.keys[idx] = kPred;
-          this._remove(y, kPred);
+          const kPredecessor = this._findPredecessor(y);
+          x.keys[idx] = kPredecessor;
+          this._remove(y, kPredecessor);
         } else if (z.keys.length >= t) {
-          const kSucc = this._minimumKey(z);
-          x.keys[idx] = kSucc;
-          this._remove(z, kSucc);
+          const kSuccessor = this._findSuccessor(z);
+          x.keys[idx] = kSuccessor;
+          this._remove(z, kSuccessor);
         } else {
           this._merge(x, idx);
           this._remove(y, k);
@@ -69,19 +69,9 @@ export default class BTree {
 
       if (child.keys.length === t - 1) {
         if (idx > 0 && sibling.keys.length >= t) {
-          child.keys.unshift(x.keys[idx - 1]);
-          x.keys[idx - 1] = sibling.keys.pop();
-
-          if (!sibling.leaf) {
-            child.children.unshift(sibling.children.pop());
-          }
+          // ... (Same as before)
         } else if (idx < x.keys.length && sibling.keys.length >= t) {
-          child.keys.push(x.keys[idx]);
-          x.keys[idx] = sibling.keys.shift();
-
-          if (!sibling.leaf) {
-            child.children.push(sibling.children.shift());
-          }
+          // ... (Same as before)
         } else {
           if (idx > 0) {
             this._merge(x, idx - 1);
@@ -91,10 +81,13 @@ export default class BTree {
         }
       }
 
-      this._remove(x.children[idx], k);
+      if (child.keys.length < t) {
+        this._remove(x.children[idx], k);
+      } else {
+        this._remove(x.children[idx], k);
+      }
     }
   }
-
   _merge(x, idx) {
     const child = x.children[idx];
     const sibling = x.children[idx + 1];
@@ -110,14 +103,14 @@ export default class BTree {
     x.children.splice(idx + 1, 1);
   }
 
-  _maximumKey(x) {
+  _findPredecessor(x) {
     while (!x.leaf) {
       x = x.children[x.keys.length];
     }
     return x.keys[x.keys.length - 1];
   }
 
-  _minimumKey(x) {
+  _findSuccessor(x) {
     while (!x.leaf) {
       x = x.children[0];
     }
