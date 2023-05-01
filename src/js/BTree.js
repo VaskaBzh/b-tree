@@ -31,8 +31,7 @@ export default class BTree {
     if (idx !== -1) {
       return idx;
     } else {
-      console.log(node)
-      return this.findChildIndex(node.children[1], key);
+      this.findChildIndex(node.children[1], key);
     }
   }
 

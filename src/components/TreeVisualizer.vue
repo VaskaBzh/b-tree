@@ -10,7 +10,6 @@
 <script>
 import * as d3 from "d3";
 import BTree from "@/js/BTree";
-// import { nextTick } from "vue";
 
 export default {
   name: "TreeVisualizer",
@@ -19,11 +18,6 @@ export default {
       btree: new BTree(2),
     };
   },
-  // mounted() {
-  //   nextTick(() => {
-  //     this.drawTree();
-  //   });
-  // },
   methods: {
     btreeToHierarchy(node) {
       if (!node) {
@@ -97,24 +91,40 @@ export default {
       this.drawTree();
     },
     searchValue(value) {
-      // const result = this.btree.search(value); // Поиск значения
-      // if (result) {
-      //   console.log("Value found:", result);
-      // } else {
-      //   console.log("Value not found");
-      // }
-      // return this.tree.search(value);
       const result = this.btree.search(parseInt(value));
-      console.log(result);
+      this.drawTree();
+      if (result) {
+        console.log("Value found:", result);
+        const svg = d3.select(this.$refs.svgContainer).select("svg");
+        svg.selectAll(".node")
+          .filter(d => d.data.keys.includes(result.node.keys[0]))
+          .classed("found", true);
+      } else {
+        console.log("Value not found");
+      }
     },
   },
 };
 </script>
 
-<style scoped>
+<style lang="scss">
 .visual {
   display: flex;
   flex-direction: column;
   align-items: center;
+  .found {
+    circle {
+      fill: #b5b3b3;
+      r: 50px;
+    }
+  }
+  svg {
+    padding: 60px 0;
+    overflow: visible;
+    circle {
+      transition: all 0.3s ease 0s;
+      r: 40px;
+    }
+  }
 }
 </style>

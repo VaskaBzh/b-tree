@@ -22,5 +22,6 @@ export default {
 .container {
   max-width: calc(1280px - 20px * 2);
   padding: 0 20px;
+  margin: 0 auto;
 }
 </style>
