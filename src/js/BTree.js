@@ -46,17 +46,19 @@ export default class BTree {
         const y = x.children[idx];
         const z = x.children[idx + 1];
 
-        if (y.keys.length >= t) {
+        if (y && y.keys.length >= t) {
           const kPredecessor = this._findPredecessor(y);
           x.keys[idx] = kPredecessor;
           this._remove(y, kPredecessor);
-        } else if (z.keys.length >= t) {
+        } else if (z && z.keys.length >= t) {
           const kSuccessor = this._findSuccessor(z);
           x.keys[idx] = kSuccessor;
           this._remove(z, kSuccessor);
         } else {
-          this._merge(x, idx);
-          this._remove(y, k);
+          if (y && z) {
+            this._merge(x, idx);
+            this._remove(y, k);
+          }
         }
       }
     } else {
@@ -65,24 +67,33 @@ export default class BTree {
       }
 
       const child = x.children[idx];
-      const sibling = idx > 0 ? x.children[idx - 1] : x.children[idx + 1];
+      const sibling = idx > 0 ? x.children[idx - 1] : (idx + 1 < x.children.length ? x.children[idx + 1] : undefined);
 
       if (child.keys.length === t - 1) {
-        if (idx > 0 && sibling.keys.length >= t) {
-          // ... (Same as before)
-        } else if (idx < x.keys.length && sibling.keys.length >= t) {
-          // ... (Same as before)
+        let mergedIdx = idx;
+        if (idx > 0 && sibling && sibling.keys.length >= t) {
+          child.keys.unshift(x.keys[idx - 1]);
+          x.keys[idx - 1] = sibling.keys.pop();
+
+          if (!child.leaf) {
+            child.children.unshift(sibling.children.pop());
+          }
+        } else if (idx < x.keys.length && sibling && sibling.keys.length >= t) {
+          child.keys.push(x.keys[idx]);
+          x.keys[idx] = sibling.keys.shift();
+
+          if (!child.leaf) {
+            child.children.push(sibling.children.shift());
+          }
         } else {
           if (idx > 0) {
             this._merge(x, idx - 1);
+            mergedIdx = idx - 1;
           } else {
             this._merge(x, idx);
           }
         }
-      }
-
-      if (child.keys.length < t) {
-        this._remove(x.children[idx], k);
+        this._remove(x.children[mergedIdx], k);
       } else {
         this._remove(x.children[idx], k);
       }
@@ -121,6 +132,15 @@ export default class BTree {
     return this._search(this.root, k);
   }
 
+  searchValue(value) {
+    const searchIntValue = parseInt(value);
+    this.btree.clearFound(); // New function to clear previous found nodes
+    this.drawTree();
+    this.btree.searchAnimated(searchIntValue, () => {
+      this.drawTree();
+    });
+  }
+
   _search(x, k) {
     if (x === null) {
       return null;
@@ -138,6 +158,46 @@ export default class BTree {
     } else {
       return this._search(x.children[i], k);
     }
+  }
+
+  _searchAnimated(x, k, onNodeChecked, delay = 500) {
+    if (x === null) {
+      onNodeChecked();
+      return null;
+    }
+
+    let i = 0;
+    while (i < x.keys.length && k > x.keys[i]) {
+      i++;
+    }
+
+    x.checked = true; // Set the checked property to true for the current node
+
+    if (i < x.keys.length && k === x.keys[i]) {
+      onNodeChecked();
+      return { node: x, index: i };
+    } else if (x.leaf) {
+      onNodeChecked();
+      return null;
+    } else {
+      setTimeout(() => {
+        this._searchAnimated(x.children[i], k, onNodeChecked, delay);
+      }, delay);
+    }
+  }
+
+  clearFound() {
+    const clearFoundNodes = (node) => {
+      node.checked = false;
+      if (!node.leaf) {
+        node.children.forEach(child => clearFoundNodes(child));
+      }
+    };
+    clearFoundNodes(this.root);
+  }
+
+  searchAnimated(k, onNodeChecked) {
+    this._searchAnimated(this.root, k, onNodeChecked);
   }
 
   insert(k) {
