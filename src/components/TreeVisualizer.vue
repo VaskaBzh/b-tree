@@ -33,17 +33,18 @@ export default {
       return {
         keys: node.keys.filter((key) => key !== undefined),
         children: children.filter((child) => child !== null),
+        checked: node.checked,
       };
     },
     drawTree() {
-      // Установка начальных и конечных значений анимации
-      const initialOpacity = 0;
-      const finalOpacity = 1;
-      const initialNodeScale = 0.1;
-      const finalNodeScale = 1;
-
-      // Длительность анимации в миллисекундах
-      const animationDuration = 500;
+      // // Установка начальных и конечных значений анимации
+      // const initialOpacity = 0;
+      // const finalOpacity = 1;
+      // const initialNodeScale = 0.1;
+      // const finalNodeScale = 1;
+      //
+      // // Длительность анимации в миллисекундах
+      // const animationDuration = 500;
 
       // Реализация визуализации B-дерева с помощью D3
       const svg = d3.select(this.$refs.svgContainer).select("svg");
@@ -70,12 +71,12 @@ export default {
           .y((d) => d.y)
         )
         .attr("stroke", "black")
-        .attr("fill", "none")
-        .attr("opacity", initialOpacity)
-        .transition()
-        .duration(animationDuration)
-        .delay(300)
-        .attr("opacity", finalOpacity);
+        .attr("fill", "none");
+        // .attr("opacity", initialOpacity)
+        // .transition()
+        // .duration(animationDuration)
+        // .delay(300)
+        // .attr("opacity", finalOpacity);
 
 
       // Рисование узлов
@@ -90,43 +91,49 @@ export default {
       node.append("circle")
         .attr("r", nodeRadius)
         .attr("fill", "white")
-        .attr("stroke", "black")
-        .attr("opacity", initialOpacity)
-        .attr("transform", `scale(${initialNodeScale})`)
-        .transition()
-        .duration(animationDuration)
-        .attr("opacity", finalOpacity)
-        .attr("transform", `scale(${finalNodeScale})`);
+        .attr("stroke", "black");
+        // .attr("opacity", initialOpacity)
+        // .attr("transform", `scale(${initialNodeScale})`)
+        // .transition()
+        // .duration(animationDuration)
+        // .attr("opacity", finalOpacity)
+        // .attr("transform", `scale(${finalNodeScale})`);
 
       node.append("text")
         .text((d) => d.data.keys.join(","))
         .attr("text-anchor", "middle")
-        .attr("dy", ".35em")
-        .attr("opacity", initialOpacity)
-        .transition()
-        .duration(animationDuration)
-        .attr("opacity", finalOpacity);
+        .attr("dy", ".35em");
+        // .attr("opacity", initialOpacity)
+        // .transition()
+        // .duration(animationDuration)
+        // .attr("opacity", finalOpacity);
     },
     highlightCheckedNodes() {
-      console.log("Highlighting checked nodes");
       const svg = d3.select(this.$refs.svgContainer).select("svg");
       svg.selectAll(".node")
         .filter(d => d.data.checked)
         .classed("checked", true);
     },
     highlightFoundNode(searchIntValue) {
-      const svg = d3.select(this.$refs.svgContainer).select("svg");
-      svg.selectAll(".node")
-        .filter(d => d.data.keys.includes(searchIntValue))
-        .classed("found", true);
+      return searchIntValue;
+      // const svg = d3.select(this.$refs.svgContainer).select("svg");
+      // svg.selectAll(".node")
+      //   .filter(d => {
+      //     setTimeout(() => {
+      //       d.data.keys.includes(searchIntValue)
+      //     }, 1000)
+      //   })
+      //   .classed("found", true);
     },
     addValue(value) {
       this.btree.insert(parseInt(value));
       this.drawTree();
     },
     removeValue(value) {
-      this.btree.remove(parseInt(value));
-      this.drawTree();
+      this.btree.remove(value, () => {
+        this.drawTree();
+        this.highlightCheckedNodes();
+      }, 500, true);
     },
     searchValue(value) {
       const searchIntValue = parseInt(value);
