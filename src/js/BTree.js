@@ -14,112 +14,6 @@ export default class BTree {
     this.t = t;
   }
 
-  remove(k, onNodeChecked, delay = 500, animated = false) {
-    if (this.root === null) {
-      return;
-    }
-
-    if (animated) {
-      this._removeAnimated(this.root, k, onNodeChecked, delay);
-    } else {
-      this._remove(this.root, k);
-    }
-
-    if (this.root.keys.length === 0 && !this.root.leaf) {
-      this.root = this.root.children[0];
-    }
-  }
-
-  findChildIndex(node, key) {
-    const idx = node?.keys.findIndex((k) => k >= key);
-
-    if (idx === -1) {
-      return node.keys.length;
-    } else {
-      return idx;
-    }
-  }
-
-  _removeAnimated(x, k, onNodeChecked, delay = 500) {
-    if (x === null) {
-      return;
-    }
-
-    const t = this.t;
-    const idx = this.findChildIndex(x, k);
-
-    if (idx < x.keys.length && x.keys[idx] === k) {
-      x.checked = true;
-      onNodeChecked();
-
-      if (x.leaf) {
-        setTimeout(() => {
-          x.keys.splice(idx, 1);
-          onNodeChecked();
-        }, delay);
-      } else {
-        const y = x.children[idx];
-        const z = x.children[idx + 1];
-
-        if (y && y.keys.length >= t) {
-          const kPredecessor = this._findPredecessor(y);
-          x.keys[idx] = kPredecessor;
-          this._removeAnimated(y, kPredecessor, onNodeChecked, delay);
-        } else if (z && z.keys.length >= t) {
-          const kSuccessor = this._findSuccessor(z);
-          x.keys[idx] = kSuccessor;
-          this._removeAnimated(z, kSuccessor, onNodeChecked, delay);
-        } else {
-          if (y && z) {
-            this._merge(x, idx);
-            this._removeAnimated(y, k, onNodeChecked, delay);
-          }
-        }
-      }
-    } else {
-      if (x.leaf) {
-        return;
-      }
-
-      const child = x.children[idx];
-      const sibling = idx > 0 ? x.children[idx - 1] : (idx + 1 < x.children.length ? x.children[idx + 1] : undefined);
-
-      if (child.keys.length === t - 1) {
-        let mergedIdx = idx;
-        if (idx > 0 && sibling && sibling.keys.length >= t) {
-          setTimeout(() => {
-            child.keys.unshift(x.keys[idx - 1]);
-            x.keys[idx - 1] = sibling.keys.pop();
-
-            if (!child.leaf) {
-              child.children.unshift(sibling.children.pop());
-            }
-            onNodeChecked();
-          }, delay);
-        } else if (idx < x.keys.length && sibling && sibling.keys.length >= t) {
-          setTimeout(() => {
-            child.keys.push(x.keys[idx]);
-            x.keys[idx] = sibling.keys.shift();
-
-            if (!child.leaf) {
-              child.children.push(sibling.children.shift());
-            }
-            onNodeChecked();
-          }, delay);
-        } else {
-          if (idx > 0) {
-            this._merge(x, idx - 1);
-            mergedIdx = idx - 1;
-          } else {
-            this._merge(x, idx);
-          }
-        }
-        this._removeAnimated(x.children[mergedIdx], k, onNodeChecked, delay);
-      } else {
-        this._removeAnimated(x.children[idx], k, onNodeChecked, delay);
-      }
-    }
-  }
   _remove(x, k) {
     const t = this.t;
     const idx = this.findChildIndex(x, k);
@@ -184,6 +78,18 @@ export default class BTree {
       }
     }
   }
+
+
+  findChildIndex(node, key) {
+    const idx = node?.keys.findIndex((k) => k >= key);
+
+    if (idx === -1) {
+      return node.keys.length;
+    } else {
+      return idx;
+    }
+  }
+
   _merge(x, idx) {
     const child = x.children[idx];
     const sibling = x.children[idx + 1];
@@ -198,6 +104,17 @@ export default class BTree {
     x.keys.splice(idx, 1);
     x.children.splice(idx + 1, 1);
   }
+  remove(k) {
+    if (this.root === null) {
+      return;
+    }
+
+    this._remove(this.root, k);
+
+    if (this.root.keys.length === 0 && !this.root.leaf) {
+      this.root = this.root.children[0];
+    }
+  }
 
   _findPredecessor(x) {
     while (!x.leaf) {
@@ -211,19 +128,6 @@ export default class BTree {
       x = x.children[0];
     }
     return x.keys[0];
-  }
-
-  search(k) {
-    return this._search(this.root, k);
-  }
-
-  searchValue(value) {
-    const searchIntValue = parseInt(value);
-    this.btree.clearFound(); // New function to clear previous found nodes
-    this.drawTree();
-    this.btree.searchAnimated(searchIntValue, () => {
-      this.drawTree();
-    });
   }
 
   _search(x, k) {

@@ -129,13 +129,15 @@ export default {
       this.btree.insert(parseInt(value));
       this.drawTree();
     },
-    removeValue(value) {
-      this.btree.remove(value, () => {
+    async removeValue(value) {
+      const removeIntValue = parseInt(value);
+      await this.searchValue(value)
+      setTimeout(() => {
+        this.btree.remove(removeIntValue);
         this.drawTree();
-        this.highlightCheckedNodes();
-      }, 500, true);
+      }, 2500);
     },
-    searchValue(value) {
+    async searchValue(value) {
       const searchIntValue = parseInt(value);
       this.btree.clearFound();
       this.drawTree();
